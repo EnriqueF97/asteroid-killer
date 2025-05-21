@@ -25,8 +25,8 @@ let renderer = null,
   dispersionAmount = 0,
   //                                                                                  gameplay tunning
   cannonPOV = true, // false for orbit controls, true for cannon POV
-  asteroidsDifficulty = 2, // less is more asteroids at once
-  asteroidSpeed = 0.3, // More is faster trayectory
+  asteroidsDifficulty = 3, // less is more asteroids at once
+  asteroidSpeed = 0.3, // More is faster speed
   fireRate = 0.04, // less is faster shooting
   bulletDamage = 10, // damage from every bullet to asteroid
   bulletSpeed = 4, // speed of the bullet
@@ -37,7 +37,7 @@ let renderer = null,
   asteroidHealth = 60, // health of each asteroid
   slowCameraMovementSpeed = 5, // more is slower camera movement
   test = true,
-  outOfBoundsLimit = 200;
+  outOfBoundsLimit = 400;
 
 // estados de movimiento de cañon
 let movingRight = false,
@@ -68,7 +68,7 @@ let movingGun = null,
   cannonRotation = null,
   cannon2 = null,
   asteroidHome = null,
-  crosshair = null,
+  reticle = null,
   // collision objects
   invincibleBoxCol = null,
   invincibleBBoxCol = null,
@@ -106,14 +106,14 @@ function createScene(canvas) {
   // Add  a camera so we can view the scene
   camera = new THREE.PerspectiveCamera(90, canvas.width / canvas.height, 0.1, 5000);
   // crosshair
-  textureUrl = "images/crosshair.png";
+  textureUrl = "images/reticle.png";
   texture = new THREE.TextureLoader().load(textureUrl);
   bumpTexture = new THREE.TextureLoader().load(bumpTextureUrl);
   material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.DoubleSide, transparent: true, opacity: 1 });
   geometry = new THREE.PlaneGeometry(1, 1, 32);
-  crosshair = new THREE.Mesh(geometry, material);
-  crosshair.position.set(0, 1.2, -10);
-  camera.add(crosshair);
+  reticle = new THREE.Mesh(geometry, material);
+  reticle.position.set(0, 1.2, -10);
+  camera.add(reticle);
   // create an AudioListener and add it to the camera
   var listener = new THREE.AudioListener();
   camera.add(listener);
@@ -710,11 +710,13 @@ function animate() {
       waitForNewAsteroid = 0;
       if (asteroidsDifficulty >= 0.99) asteroidsDifficulty -= 0.05;
     }
-    // bullet dispersion
 
-    if (firing && dispersionAmount < 0.03) dispersionAmount += 0.0003;
-    if (!firing) dispersionAmount = dispersionAmount > 0 ? dispersionAmount - 0.03 : 0;
+    // bullet dispersion
+    if (firing && dispersionAmount < 0.03) dispersionAmount += 0.0004;
+    if (!firing) dispersionAmount = dispersionAmount > 0 ? dispersionAmount - 0.001 : 0;
     if (dispersionAmount > 0) console.log(dispersionAmount);
+    if (!zoomedIn) reticle.scale.set(1 + 30 * dispersionAmount, 1 + 30 * dispersionAmount, reticle.scale.z);
+    else reticle.scale.set(1.5 + 60 * dispersionAmount, 1.5 + 60 * dispersionAmount, reticle.scale.z);
 
     // bullets update
     for (const bullet of bulletsArray) {
@@ -827,7 +829,12 @@ function animate() {
     gameOverScreen();
 
     // remove all asteroids and bullets
-    asteroidsArray = null;
+    for (const as in asteroidsArray) {
+      world.remove(asteroidsArray[as]);
+    }
+    for (const bu in bulletsArray) {
+      world.remove(bulletsArray[bu]);
+    }
     asteroidsArray = [];
     bulletsArray = null;
     bulletsArray = [];
@@ -873,7 +880,6 @@ document.addEventListener(
     if (event.keyCode === 32) {
       // fire
       event.preventDefault();
-      console.log(dispersionAmount);
       firing = true;
     }
     if (event.keyCode === 13) {
@@ -890,7 +896,7 @@ document.addEventListener(
 
       camera.zoom = 4;
       camera.rotation.x = Math.PI / -80;
-      crosshair.position.set(-0.3, 1.3, -40);
+      reticle.position.set(-0.3, 1.3, -40);
       camera.updateProjectionMatrix();
     }
     if (event.keyCode === 27) {
@@ -928,8 +934,6 @@ document.addEventListener(
     if (event.keyCode === 32) {
       // fire
       event.preventDefault();
-      dispersionAmount > 0 ? dispersionAmount - 0.03 : 0;
-      console.log(dispersionAmount);
       firing = false;
     }
     if (event.keyCode === 16) {
@@ -937,10 +941,9 @@ document.addEventListener(
       event.preventDefault();
       zoomedIn = false;
       camera.zoom = 1;
-      dispersionAmount = 0;
       camera.rotation.x = Math.PI / -25;
       camera.updateProjectionMatrix();
-      crosshair.position.set(0, 1.2, -10);
+      reticle.position.set(0, 1.2, -10);
     }
   }.bind(this)
 );
@@ -982,7 +985,6 @@ function playAgain() {
   bulletsArray = null;
   bulletsArray = [];
   asteroidsArray = null;
-  asteroidsDifficulty = 3;
   asteroidsArray = [];
   gameOver = false;
   sphereGun.health = gunHealth;
