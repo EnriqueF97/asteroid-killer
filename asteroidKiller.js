@@ -21,7 +21,7 @@ let renderer = null,
   score = 0,
   highScore = 0,
   gameOver = false,
-  pause = true,
+  pause = false,
   gunHealth = 20, // players health
   outOfBoundsLimit = 600; // distance from the center of the world where the asteroid will be destroyed
 
@@ -667,7 +667,7 @@ function createAsteroid() {
   let maxSize = 5;
   let normalizedSize = (asteroidSize - minSize) / (maxSize - minSize);
   asteroid.material = asteroid.material.clone();
-  asteroid.material.color.setRGB(0.4 * normalizedSize, 0, 0);
+  //asteroid.material.color.setRGB(0.4 * normalizedSize, 0, 0);
   asteroidCount += 1;
   x = getRndInteger(1500, 300) - 750;
   y = getRndInteger(1500, 300) - 700;
